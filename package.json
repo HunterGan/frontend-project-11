@@ -1,0 +1,46 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "description": "3rd project of FrontendDev on Hexlet - RSS agregator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HunterGan/frontend-project-11.git"
+  },
+  "author": "HunterGan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HunterGan/frontend-project-11/issues"
+  },
+  "homepage": "https://github.com/HunterGan/frontend-project-11#readme",
+  "devDependencies": {
+    "@babel/core": "^7.19.3",
+    "@babel/eslint-parser": "^7.19.1",
+    "@babel/preset-env": "^7.19.3",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.2.5",
+    "css-loader": "^6.7.1",
+    "eslint": "^8.25.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-babel": "^5.3.1",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^27.1.1",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.1.2",
+    "postcss-loader": "^7.0.1",
+    "sass": "^1.55.0",
+    "sass-loader": "^13.1.0",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.11.1"
+  },
+  "dependencies": {
+    "bootstrap": "^5.2.2"
+  }
+}
