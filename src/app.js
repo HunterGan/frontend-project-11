@@ -12,10 +12,7 @@ export default () => {
   const state = {
     lng: defaultLanguage,
     formState: 'filling', /// loading, invalid,
-    feeds: {
-      links: [], /// ['https://ru.hexlet.io/lessons.rss', ' http://lorem-rss.herokuapp.com/feed'],
-      feedList: [],
-    },
+    feeds: [],
     posts: [],
     viewedPostsID: new Set(),
     errorMessage: '',
@@ -27,6 +24,9 @@ export default () => {
       localeTextElements: document.querySelectorAll('[data-translate]'),
       feedsContainer: document.querySelector('.feeds'),
       postsContainer: document.querySelector('.posts'),
+      modalTitle: document.querySelector('.modal-title'),
+      modalBody: document.querySelector('.modal-body'),
+      modalLink: document.querySelector('.full-article'),
     },
   };
 
@@ -40,6 +40,5 @@ export default () => {
   const watchedState = onChange(state, (path, value) => {
     commander(state, i18n, { path, value });
   });
-  console.log(state.viewedPostsID.has('gf'));
   view(state, watchedState, i18n);
 };

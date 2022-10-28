@@ -13,14 +13,13 @@ export default (url, i18n, { feeds }) => {
   });
   const schema = yup.object().shape({
     url: yup.string().url().notOneOf(
-      feeds.links,
+      feeds.map((feed) => feed.url),
     ).required(),
   });
   return schema.validate({ url });
 };
 
 const proxify = (url) => {
-  console.log('proxify');
   const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
   urlWithProxy.searchParams.set('url', url);
   urlWithProxy.searchParams.set('disableCache', 'true');
@@ -29,14 +28,19 @@ const proxify = (url) => {
 
 export const getData = (url) => axios
   .get(proxify(url))
-  .then((response) => response.data.contents)
+  .then((response) => {
+    console.log(response.data);
+    return { data: response.data.contents, url };
+  })
   .catch(() => {
     throw new Error('response');
   });
 
-export const parse = (data, state, watchedState) => {
+export const parse = (response, state) => {
+  const { data, url } = response;
   const parser = new DOMParser();
   const dom = parser.parseFromString(data, 'application/xml');
+  console.log(dom);
   const parseError = dom.querySelector('parsererror');
   if (parseError) {
     console.log(parseError);
@@ -44,9 +48,11 @@ export const parse = (data, state, watchedState) => {
   }
   console.log('noerror');
   const feed = {
+    url,
     title: dom.querySelector('title').textContent,
     description: dom.querySelector('description').textContent,
   };
+  console.log('noerror2');
   const feedPosts = Array
     .from(dom.querySelectorAll('item'))
     .map((item) => {
@@ -55,12 +61,15 @@ export const parse = (data, state, watchedState) => {
       const description = item.querySelector('description').textContent;
       return { title, link, description };
     });
+    console.log('noerror3');
   const oldPosts = state.posts.map((post) => {
     const { title, link, description } = post;
     return { title, link, description };
   });
-  const newPosts = _.differenceWith(feedPosts, oldPosts, _.isEqual)
+  console.log('noerror4');
+  const posts = _.differenceWith(feedPosts, oldPosts, _.isEqual)
     .map((post) => _.set(post, 'id', _.uniqueId('post')));
-  watchedState.feeds.feedList.push(feed);
-  watchedState.posts = [...state.posts, ...newPosts];
+  console.log('finishParse');
+
+  return { feed, posts };
 };

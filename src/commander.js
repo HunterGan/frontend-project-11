@@ -15,6 +15,7 @@ export default (state, i18n, changedData) => {
         console.log('buildRSS');
         state.elements.inputField.classList.remove('is-invalid');
         state.elements.feedback.textContent = '';
+        state.elements.inputField.value = '';
         break;
       case 'invalid':
         state.elements.inputField.classList.add('is-invalid');

@@ -11,6 +11,13 @@ const setLocaleTexts = ({ localeTextElements }, i18n) => {
   });
 };
 
+const buildModal = ({ elements, posts }, id) => {
+  const { title, link, description } = _.find(posts, (post) => post.id === id);
+  elements.modalTitle.textContent = title;
+  elements.modalBody.textContent = description;
+  elements.modalLink.href = link;
+};
+
 export default (state, watchedState, i18n) => {
   setLocaleTexts(state.elements, i18n);
   state.elements.rssForm.addEventListener('submit', (e) => {
@@ -23,15 +30,29 @@ export default (state, watchedState, i18n) => {
         return getData(url);
       })
       .then((response) => {
-        parse(response, state, watchedState);
-        /// state.feeds.links.push(inputPath);
+        console.log('yyyyyyyy1');
+        const { feed, posts } = parse(response, state);
+        console.log('yyyyyyyy2');
         watchedState.formState = 'buildRSS';
+        watchedState.feeds.push(feed);
+        watchedState.posts = [...posts, ...state.posts];
+        console.log('yyyyyyyy3');
       })
       .catch((err) => {
         state.errorMessage = err.errors ?? err;
         watchedState.formState = 'invalid';
         watchedState.formState = 'filling';
       });
+  });
+
+  updateRSS(state, watchedState);
+
+  
+  state.elements.postsContainer.addEventListener('click', (e) => {
+    if (e.target.nodeName === 'BUTTON') {
+      const { id } = e.target.dataset;
+      buildModal(state, id);
+    }
   });
 };
 
@@ -95,7 +116,7 @@ export const addPosts = (state, i18n) => {
   const postsList = buildPostList(state, i18n);
   state.posts.forEach((post) => {
     const {
-      title, link, description, id,
+      title, link, id,
     } = post;
     const postContainer = document.createElement('li');
     postContainer.classList.add('list-group-item', 'd-flex', 'justify-content-between');
@@ -120,4 +141,21 @@ export const addPosts = (state, i18n) => {
     postContainer.append(modalButton);
     postsList.prepend(postContainer);
   });
+};
+
+const updateRSS = (state, watchedState) => {
+  const callBack = () => {
+    const urls = state.feeds.map((feed) => feed.url);
+    const responses = urls.map((url) => getData(url));
+    const promise = Promise.all(responses);
+    promise.then((feeds) => {
+      feeds.forEach((feed) => {
+        const { posts } = parse(feed, state);
+        watchedState.posts = [...posts, ...state.posts];
+      });
+    });
+    setTimeout(callBack, 5000);
+  };
+  console.log('im hete');
+  return callBack();
 };
