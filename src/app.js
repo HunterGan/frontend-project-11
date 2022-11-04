@@ -19,6 +19,7 @@ export default () => {
       feeds: [],
       posts: [],
     },
+    updateTimer: false,
   };
 
   const i18n = i18next.createInstance();

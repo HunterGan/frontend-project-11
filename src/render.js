@@ -19,7 +19,7 @@ const renderForm = ({ uiState }, value, i18n, elements) => {
       feedback.classList.remove('text-danger');
       feedback.classList.add('text-success');
       feedback.textContent = i18n.t('successMessage');
-      inputField.textContent = '';
+      inputField.value = '';
       break;
     case 'invalid':
       inputField.classList.add('is-invalid');
@@ -70,7 +70,7 @@ const buildPostList = (elements, i18n) => {
   return postsList;
 };
 
-export const renderFeeds = (state, i18n, elements) => {
+const renderFeeds = (state, i18n, elements) => {
   const feedsList = buildFeedList(elements, i18n);
   state.dataState.feeds.forEach((feed) => {
     const { title, description } = feed;
@@ -88,7 +88,7 @@ export const renderFeeds = (state, i18n, elements) => {
   });
 };
 
-export const renderPosts = (state, i18n, elements) => {
+const renderPosts = (state, i18n, elements) => {
   const postsList = buildPostList(elements, i18n);
   state.dataState.posts.forEach((post) => {
     const { title, link, id } = post;
@@ -141,6 +141,13 @@ export default (state, i18n, changedData, elements) => {
       break;
     case 'uiState.activeModalID':
       renderModal(state, elements);
+      break;
+    case 'lng':
+      i18n.changeLanguage(value);
+      if (state.updateTimer) {
+        renderPosts(state, i18n, elements);
+        renderFeeds(state, i18n, elements);
+      }
       break;
     default:
       break;

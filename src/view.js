@@ -1,7 +1,9 @@
 // @ts-check
 
 import onChange from 'on-change';
-import validate, { parse, getData } from './validate.js';
+import axios from 'axios';
+import * as yup from 'yup';
+import parse, { getUniquePosts } from './parser.js';
 import render from './render.js';
 
 const getElements = () => {
@@ -16,25 +18,57 @@ const getElements = () => {
     modalTitle: document.querySelector('.modal-title'),
     modalBody: document.querySelector('.modal-body'),
     modalLink: document.querySelector('.full-article'),
+    langChangeButton: document.querySelector('#changeLanguage'),
   };
   return elements;
 };
 
+const validate = (url, watchedState) => {
+  const schema = yup.object().shape({
+    url: yup.string().url('invalidURL').notOneOf(watchedState.dataState.feeds
+      .map((feed) => feed.url), 'alreadyExists').required('emptyField'),
+  });
+  return schema.validate({ url });
+};
+
+const proxify = (url) => {
+  const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
+  urlWithProxy.searchParams.set('url', url);
+  urlWithProxy.searchParams.set('disableCache', 'true');
+  console.log('test5');
+  return urlWithProxy.toString();
+};
+
+const getData = (url) => axios
+  .get(proxify(url))
+  .then((response) => {
+    const responseData = { data: response.data.contents, url };
+    return responseData;
+  })
+  .catch(() => {
+    throw new Error('badNetwork');
+  });
+
 const updateRSS = (watchedState) => {
+  const { dataState } = watchedState;
   const callBack = () => {
-    const urls = watchedState.dataState.feeds.map((feed) => feed.url);
+    const urls = dataState.feeds.map((feed) => feed.url);
     const responses = urls.map((url) => getData(url));
     const promise = Promise.all(responses);
     promise.then((feeds) => {
-      console.log('111', feeds);
       feeds.forEach((feed) => {
-        const { posts } = parse(feed, watchedState);
-        watchedState.dataState.posts = [...posts, ...watchedState.dataState.posts];
+        const parsedData = parse(feed);
+        const posts = getUniquePosts(parsedData, watchedState);
+        dataState.posts = [...posts, ...dataState.posts];
       });
     });
     setTimeout(callBack, 5000);
   };
-  return callBack();
+  if (!watchedState.updateTimer) {
+    watchedState.updateTimer = true;
+    return callBack();
+  }
+  return;
 };
 
 const setLocaleTexts = (elements, i18n) => {
@@ -49,28 +83,25 @@ const setLocaleTexts = (elements, i18n) => {
 
 export default (state, i18n) => {
   const elements = getElements();
-  setLocaleTexts(elements, i18n);
-
   const watchedState = onChange(state, (path, value) => {
     render(state, i18n, { path, value }, elements);
   });
+  setLocaleTexts(elements, i18n);
 
-  elements.rssForm.addEventListener('submit', (e) => {
+  elements.rssForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(elements.rssForm);
     const inputPath = formData.get('url');
     console.log(inputPath);
     watchedState.uiState.formState = 'loading';
-    console.log('test1');
-    validate(inputPath, i18n, watchedState)
+    validate(inputPath, watchedState)
       .then(({ url }) => getData(url))
       .then((response) => {
-        console.log('test2');
-        const { feed, posts } = parse(response, watchedState);
-        console.log('test3');
+        const { feed, posts } = parse(response);
+        const newPosts = getUniquePosts({ posts }, watchedState);
         watchedState.uiState.formState = 'valid';
         watchedState.dataState.feeds.push(feed);
-        watchedState.dataState.posts = [...posts, ...watchedState.dataState.posts];
+        watchedState.dataState.posts = [...newPosts, ...watchedState.dataState.posts];
         watchedState.uiState.formState = 'filling';
         updateRSS(watchedState);
       })
@@ -81,13 +112,18 @@ export default (state, i18n) => {
       });
   });
 
-  elements.postsContainer.addEventListener('click', (e) => {
-    const { id } = e.target.dataset;
+  elements.postsContainer?.addEventListener('click', (e) => {
+    const { id } = e.target.dataset ?? null;
     if (id) {
       watchedState.uiState.viewedPostsID.add(id);
-      if (e.target.nodeName === 'BUTTON') {
+      if (e.target instanceof HTMLButtonElement) {
         watchedState.uiState.activeModalID = id;
       }
     }
+  });
+  elements.langChangeButton?.addEventListener('change', (e) => {
+    const newLanguage = e.target.defaultValue;
+    watchedState.lng = newLanguage;
+    setLocaleTexts(elements, i18n);
   });
 };
