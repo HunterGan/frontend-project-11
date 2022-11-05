@@ -49,8 +49,7 @@ const createContainer = (element, i18n, dest) => {
 };
 
 const renderFeeds = (state, i18n, elements) => {
-  const { feedsContainer } = elements;
-  const feedsList = createContainer(feedsContainer, i18n, 'feeds');
+  const feedsList = createContainer(elements.feedsContainer, i18n, 'feeds');
   state.dataState.feeds.forEach((feed) => {
     const { title, description } = feed;
     const feedContainer = document.createElement('li');
@@ -68,8 +67,7 @@ const renderFeeds = (state, i18n, elements) => {
 };
 
 const renderPosts = (state, i18n, elements) => {
-  const { postsContainer } = elements;
-  const postsList = createContainer(postsContainer, i18n, 'posts');
+  const postsList = createContainer(elements.postsContainer, i18n, 'posts');
   state.dataState.posts.forEach((post) => {
     const { title, link, id } = post;
     const postContainer = document.createElement('li');
