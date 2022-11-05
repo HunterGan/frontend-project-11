@@ -19,8 +19,8 @@ export default {
     },
     feedForm: {
       feeds: 'Feeds',
-      articles: 'Posts',
-      buttonRead: 'Read',
+      posts: 'Posts',
+      buttonRead: 'Read full',
     },
     successMessage: 'RSS downloaded succesfully',
   },

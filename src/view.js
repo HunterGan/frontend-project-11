@@ -35,7 +35,6 @@ const proxify = (url) => {
   const urlWithProxy = new URL('/get', 'https://allorigins.hexlet.app');
   urlWithProxy.searchParams.set('url', url);
   urlWithProxy.searchParams.set('disableCache', 'true');
-  console.log('test5');
   return urlWithProxy.toString();
 };
 
@@ -50,7 +49,10 @@ const getData = (url) => axios
   });
 
 const updateRSS = (watchedState) => {
-  const { dataState } = watchedState;
+  const { dataState, updateTimer } = watchedState;
+  if (updateTimer) {
+    return null;
+  }
   const callBack = () => {
     const urls = dataState.feeds.map((feed) => feed.url);
     const responses = urls.map((url) => getData(url));
@@ -64,11 +66,7 @@ const updateRSS = (watchedState) => {
     });
     setTimeout(callBack, 5000);
   };
-  if (!watchedState.updateTimer) {
-    watchedState.updateTimer = true;
-    return callBack();
-  }
-  return;
+  return callBack();
 };
 
 const setLocaleTexts = (elements, i18n) => {
@@ -87,26 +85,27 @@ export default (state, i18n) => {
     render(state, i18n, { path, value }, elements);
   });
   setLocaleTexts(elements, i18n);
-
   elements.rssForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(elements.rssForm);
     const inputPath = formData.get('url');
-    console.log(inputPath);
+    watchedState.uiState.userMessage = '';
     watchedState.uiState.formState = 'loading';
     validate(inputPath, watchedState)
       .then(({ url }) => getData(url))
       .then((response) => {
         const { feed, posts } = parse(response);
         const newPosts = getUniquePosts({ posts }, watchedState);
+        watchedState.uiState.userMessage = 'successMessage';
         watchedState.uiState.formState = 'valid';
         watchedState.dataState.feeds.push(feed);
         watchedState.dataState.posts = [...newPosts, ...watchedState.dataState.posts];
         watchedState.uiState.formState = 'filling';
         updateRSS(watchedState);
+        watchedState.updateTimer = true;
       })
       .catch((err) => {
-        watchedState.uiState.userMessage = i18n.t(`errors.${err.message}`);
+        watchedState.uiState.userMessage = `errors.${err.message}`;
         watchedState.uiState.formState = 'invalid';
         watchedState.uiState.formState = 'filling';
       });

@@ -19,7 +19,7 @@ export default {
     },
     feedForm: {
       feeds: 'Фиды',
-      articles: 'Посты',
+      posts: 'Посты',
       buttonRead: 'Просмотр',
     },
     successMessage: 'RSS успешно загружен',

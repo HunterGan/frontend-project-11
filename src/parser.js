@@ -12,6 +12,7 @@ export default (response) => {
   const feed = {
     url,
     title: dom.querySelector('title').textContent,
+    // @ts-ignore
     description: dom.querySelector('description').textContent,
   };
   const posts = Array
