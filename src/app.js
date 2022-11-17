@@ -60,21 +60,26 @@ const updateRSS = (watchedState) => {
       return { title, link, description };
     });
     const urls = data.feeds.map((feed) => feed.url);
-    const feedPromises = urls.map((url) => axios.get(proxify(url)));
+    const feedPromises = urls.map((url) => axios.get(proxify(url))
+      .catch((err) => console.log('axioError')));
     const promiseAll = Promise.all(feedPromises);
     promiseAll.then((responses) => {
       responses.forEach((response, index) => {
         const { contents } = response.data;
-        const parsedData = parse(contents);
-        parsedData.feed.url = watchedState.data.feeds[index].id;
-        const newPosts = getUniquePosts(parsedData.posts, currentPosts);
-        if (newPosts.length > 0) {
-          const { posts } = normalizeData({ feed: parsedData.feed, posts: newPosts });
-          data.posts = [...posts, ...data.posts];
+        try {
+          const parsedData = parse(contents);
+          parsedData.feed.url = watchedState.data.feeds[index].id;
+          const newPosts = getUniquePosts(parsedData.posts, currentPosts);
+          if (newPosts.length > 0) {
+            const { posts } = normalizeData({ feed: parsedData.feed, posts: newPosts });
+            data.posts = [...posts, ...data.posts];
+          }
+        } catch (e) {
+          console.log('ParsingError');
         }
       });
-    }).catch((err) => console.log(err.message));
-    setTimeout(callBack, 5000);
+      setTimeout(callBack, 5000);
+    });
   };
   return callBack();
 };
