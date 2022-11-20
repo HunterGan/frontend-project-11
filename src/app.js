@@ -9,6 +9,7 @@ import parse from './parser.js';
 import normalizeData, { getUniquePosts } from './normalizeData.js';
 
 const defaultLanguage = 'ru';
+const updateRSSinterval = 5000; // ms
 
 const getElements = () => {
   const elements = {
@@ -55,28 +56,30 @@ const proxify = (url) => {
 const updateRSS = (watchedState) => {
   const callBack = () => {
     const { data } = watchedState;
-    const currentPosts = watchedState.data.posts.map((post) => {
+    const currentPosts = data.posts.map((post) => {
       const { title, link, description } = post;
       return { title, link, description };
     });
     const urls = data.feeds.map((feed) => feed.url);
-    const feedPromises = urls.map((url) => axios.get(proxify(url))
-      .catch((err) => console.log('axiosError', err.message)));
+    const feedPromises = urls.map((url, index) => axios.get(proxify(url))
+      .then((response) => {
+        const parsedData = parse(response.data.contents);
+        parsedData.feed.url = watchedState.data.feeds[index].url;
+        const newPosts = getUniquePosts(parsedData.posts, currentPosts);
+        const { posts } = normalizeData({ feed: parsedData.feed, posts: newPosts });
+        return posts;
+      }).catch((e) => {
+        console.log('Load data error:', e.message);
+        return [];
+      }));
     const promiseAll = Promise.all(feedPromises);
     promiseAll.then((responses) => {
-      responses.forEach((response, index) => {
-        try {
-          const parsedData = parse(response.data.contents);
-          parsedData.feed.url = watchedState.data.feeds[index].id;
-          const newPosts = getUniquePosts(parsedData.posts, currentPosts);
-          const { posts } = normalizeData({ feed: parsedData.feed, posts: newPosts });
-          data.posts = [...posts, ...data.posts];
-        } catch (e) {
-          console.log('ParsingError');
-        }
+      const newPosts = responses.filter((response) => response.length > 0);
+      newPosts.forEach((posts) => {
+        data.posts = [...posts, ...data.posts];
       });
-      setTimeout(callBack, 5000);
-    });
+    }).catch((e) => console.log('PromiseAll Error', e.message))
+      .finally(() => setTimeout(callBack, updateRSSinterval));
   };
   return callBack();
 };
