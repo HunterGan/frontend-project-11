@@ -8,7 +8,7 @@ import view from './view.js';
 import parse from './parser.js';
 import normalizeData, { getUniquePosts } from './normalizeData.js';
 
-const defaultLanguage = 'ru';
+const defaultLanguage = 'ru'; // ru, en
 const updateRSSinterval = 5000; // ms
 
 const getElements = () => {
@@ -53,32 +53,33 @@ const proxify = (url) => {
   return urlWithProxy.toString();
 };
 
+const getCurrentPosts = (data) => {
+  const currentPosts = data.posts.map((post) => {
+    const { title, link, description } = post;
+    return { title, link, description };
+  });
+  return currentPosts;
+};
+
 const updateRSS = (watchedState) => {
   const callBack = () => {
     const { data } = watchedState;
-    const currentPosts = data.posts.map((post) => {
-      const { title, link, description } = post;
-      return { title, link, description };
-    });
     const urls = data.feeds.map((feed) => feed.url);
-    const feedPromises = urls.map((url, index) => axios.get(proxify(url))
+    const feedPromises = urls.map((url, index) => axios
+      .get(proxify(url))
       .then((response) => {
         const parsedData = parse(response.data.contents);
         parsedData.feed.url = watchedState.data.feeds[index].url;
+        const currentPosts = getCurrentPosts(data);
         const newPosts = getUniquePosts(parsedData.posts, currentPosts);
         const { posts } = normalizeData({ feed: parsedData.feed, posts: newPosts });
-        return posts;
-      }).catch((e) => {
-        console.log('Load data error:', e.message);
-        return [];
-      }));
-    const promiseAll = Promise.all(feedPromises);
-    promiseAll.then((responses) => {
-      const newPosts = responses.filter((response) => response.length > 0);
-      newPosts.forEach((posts) => {
-        data.posts = [...posts, ...data.posts];
-      });
-    }).catch((e) => console.log('PromiseAll Error', e.message))
+        if (posts.length > 0) {
+          data.posts = [...posts, ...data.posts];
+        }
+      })
+      .catch((e) => console.log('Load data error:', e.message)));
+
+    Promise.all(feedPromises)
       .finally(() => setTimeout(callBack, updateRSSinterval));
   };
   return callBack();
