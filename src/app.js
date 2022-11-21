@@ -102,13 +102,14 @@ const handleSubmitButtonEvent = (watchedState, elements) => {
       const { feed, posts } = normalizeData(parsedData);
       data.feeds = [...data.feeds, feed];
       data.posts = [...data.posts, ...posts];
-      dataLoadState.status = 'filling';
     })
     .catch((err) => {
       formState.status = 'invalid';
       const currentError = (err.name === 'AxiosError') ? 'badNetwork' : err.message;
       dataLoadState.error = currentError;
       dataLoadState.status = 'failed';
+    })
+    .finally(() => {
       dataLoadState.status = 'filling';
     });
 };
@@ -157,15 +158,15 @@ export default () => {
     view(state, i18n, { fullPath: path, value }, elements);
   });
 
-  elements.rssForm?.addEventListener('submit', (e) => {
+  elements.rssForm.addEventListener('submit', (e) => {
     e.preventDefault();
     handleSubmitButtonEvent(watchedState, elements);
   });
-  elements.postsContainer?.addEventListener('click', (e) => {
+  elements.postsContainer.addEventListener('click', (e) => {
     handlePostButtonEvent(watchedState, elements, e);
   });
-  elements.langChangeButton?.addEventListener('change', (e) => {
-    const newLanguage = e.target?.defaultValue ?? 'ru';
+  elements.langChangeButton.addEventListener('change', (e) => {
+    const newLanguage = e.target.defaultValue ?? 'ru';
     watchedState.lng = newLanguage;
     setLocaleTexts(elements, i18n);
   });
